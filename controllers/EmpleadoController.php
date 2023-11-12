@@ -10,7 +10,7 @@
             $body = (array)$request->getParsedBody();
 
             $data = ['estado' => 'Incorrecto', 'mensaje' => 'Datos o alguno de los datos fueron vacios.'];
-            if(isset($body['rol']) && isset($body['nombre']) && isset($body['disponible']) && isset($body['estado'])) {
+            // if(isset($body['rol']) && isset($body['nombre']) && isset($body['disponible']) && isset($body['estado'])) {
                 $empleado = new Empleado($body['rol'], $body['nombre'], $body['disponible'], $body['estado']);
     
                 if(EmpleadoDAO::insertar($empleado)) {
@@ -18,7 +18,7 @@
                 } else {
                     $data = ['estado' => 'Incorrecto', 'mensaje' => 'Hubo un error al crear el emplaedo.'];
                 }
-            }
+            // }
 
             $response->getBody()->write(json_encode($data));
             return $response->withHeader('Content-Type', 'application/json');
