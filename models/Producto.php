@@ -11,7 +11,7 @@
         public int $id;
         public string $nombre;
         public float $precio;
-        public TipoProducto $tipoProducto; // Bartender - Cervecero - Cocinero
+        public TipoProducto $tipoProducto;
         public $tiempoMinutos;
 
         public function __construct(string $nombre, float $precio, $tipoProducto, $tiempoMinutos, int $id=-1) {
