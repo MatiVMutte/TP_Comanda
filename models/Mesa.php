@@ -9,14 +9,11 @@
 
     class Mesa {
         public int $id;
-        public int $idPedido;
-        public int $idMozo;
+        public ?int $idMozo;
         public Estado $estado;
 
-        public function __construct(int $idPedido = -1, int $idMozo = -1, $estado="Cerrado", int $id=-1) {
-            $this->idPedido = $idPedido;
+        public function __construct($idMozo = -1, $estado="Cerrado", $id=-1) {
             $this->idMozo = $idMozo;
-            // ---- opcionales ----
             $this->id = $id;
             $this->estado = Estado::from($estado);
         }

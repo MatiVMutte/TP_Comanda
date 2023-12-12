@@ -37,6 +37,36 @@
             $response->getBody()->write(json_encode($producto));
             return $response->withHeader('Content-Type', 'application/json');
         }
+
+        public function modificar(Request $request, Response $response, array $args) {
+            $id = $args['id'];
+            $body = (array)$request->getParsedBody();
+
+            $data = ['estado' => 'Incorrecto', 'mensaje' => 'Datos o alguno de los datos fueron vacios.'];
+            if(isset($body['nombre']) && isset($body['precio']) && isset($body['tiempoMinutos'])) {
+                $producto = new Producto($body['nombre'], $body['precio'], $body['tipoProducto'], $body['tiempoMinutos']);
+                $producto->id = $id;
+    
+                if(ProductoDAO::modificar($producto)) {
+                    $data = ['estado' => 'Correcto', 'mensaje' => 'Producto modificado con exito.'];
+                } else {
+                    $data = ['estado' => 'Incorrecto', 'mensaje' => 'Hubo un error al modificar el producto.'];
+                }
+            }
+
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
+        }
+
+        public function eliminar(Request $request, Response $response, array $args) {
+            $data = ['estado' => 'Incorrecto', 'mensaje' => 'Hubo un error al eliminar el producto.'];
+            if(ProductoDAO::eliminar($args['id'])) {
+                $data = ['estado' => 'Correcto', 'mensaje' => 'Producto eliminado con exito.'];
+            }
+
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
+        }
     }
 
 ?>

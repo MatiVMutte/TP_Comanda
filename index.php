@@ -1,140 +1,87 @@
 <?php
+
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Routing\RouteCollectorProxy;
 use Slim\Factory\AppFactory;
 
-include 'controllers/ProductoController.php';
-include 'controllers/PedidoController.php';
-include 'controllers/EmpleadoController.php';
-include 'controllers/MesaController.php';
+include_once 'controllers/ProductoController.php';
+include_once 'controllers/PedidoController.php';
+include_once 'controllers/EmpleadoController.php';
+include_once 'controllers/MesaController.php';
+include_once 'controllers/MozoController.php';
+include_once 'controllers/LogInController.php';
+include_once 'controllers/ClienteController.php';
+include_once 'middlewares/AutorizacionMiddleware.php';
 
-require __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 $app = AppFactory::create();
 
 $app->setBasePath("/TP_PHP"); // POR XAMPP - La raiz es HTDOC
 
-/**
- * Middleware que se EJECUTA ANTES de la solicitud PRINCIPAL. 
- *          Este toma la solicitud y el manejador, maneja la solicitud, 
- *          luego agrega "BEFORE" al contenido existe de la respuesta.
- * 
- */
-// $beforeMiddleware = function (Request $request, RequestHandler $handler) { 
-//     $response = $handler->handle($request);
-//     $existingContent = (string) $response->getBody();
-
-//     $response = new Response();
-//     $response->getBody()->write('BEFORE' . $existingContent);
-
-//     return $response;
-// };
-
-/**
- * Middleware que se EJECUTA DESPUES de la solicitud PRINCIPAL. 
- *          Este middleware toma la solicitud y el manejador, maneja la solicitud, 
- *          y luego agrega ‘AFTER’ al final de la respuesta.
- */
-// $afterMiddleware = function ($request, $handler) {
-//     $response = $handler->handle($request);
-//     $response->getBody()->write('AFTER');
-//     return $response;
-// };
-
-
-/**
- * Agrega estos MIDDLEWARE a la aplicacion
- */
-// $app->add($beforeMiddleware);
-// $app->add($afterMiddleware);
-
-/**
- * EJEMPLO DE USO DE MIDDLEWARE
- */
-
- // <><><><><><><> EJEMPLO DE MIDDLEWARE <><><><><><><>
-
-// $app->add(function (Request $request, RequestHandler $handler) {
-//     $response = $handler->handle($request);
-//     $existingContent = (string) $response->getBody();
-
-//     $response = new \Slim\Psr7\Response();
-//     $response->getBody()->write('BEFORE ' . $existingContent);
-
-//     return $response;
-// });
-
-// $app->add(function (Request $request, RequestHandler $handler) {
-//     $response = $handler->handle($request);
-//     $response->getBody()->write(' AFTER');
-//     return $response;
-// });
-
-// $app->get('[/]', function (Request $request, Response $response, array $args) {
-//     $response->getBody()->write('Hello World');
-//     return $response;
-// });
-
-
-// Función genérica que comprueba si los campos necesarios están presentes.
-function verificarCampos($campos, $request, $handler) {
-    $data = $request->getParsedBody();
-
-    // Comprueba si todos los campos necesarios están presentes.
-    foreach ($campos as $campo) {
-        if (!isset($data[$campo])) {
-            $response = new \Slim\Psr7\Response();
-            $response->getBody()->write(json_encode(['error' => 'Falta el campo ' . $campo . '.']));
-            return $response->withHeader('Content-Type', 'application/json');
-        }
-    }
-        
-    $response = $handler->handle($request);
-    return $response;
-}
-
-// Arreglos de campos necesarios para cada entidad.
-$camposEmpleado = ['nombre', 'disponible', 'estado', 'rol'];
-$camposProducto = ['nombre', 'precio', 'tipoProducto', 'tiempoMinutos'];
-$camposPedido = ['idMesa', 'nombreCliente', 'totalPrecio', 'estado', 'tiempoEstimado'];
-$camposMesa = ['idPedido', 'idMozo', 'estado'];
+$app->addBodyParsingMiddleware();
 
 // Grupos de rutas que usan la función genérica con los campos correspondientes.
-$app->group('/productos', function (RouteCollectorProxy $group) use ($camposProducto) {
-    $group->post('/', 'ProductoController:insertar')->add(function($request, $handler) use ($camposProducto) {
-        return verificarCampos($camposProducto, $request, $handler);
-    });
+$app->group('/productos', function (RouteCollectorProxy $group) {
+    $group->post('/', 'ProductoController:insertar');
     $group->get('[/]', 'ProductoController:listar');
     $group->get('/{id}', 'ProductoController:listarUno');
-});
+    $group->put('/{id}', 'ProductoController:modificar');
+    $group->delete('/{id}', 'ProductoController:eliminar');
+})->add(new AutorizacionMiddleware("Socio"));
 
-$app->group('/pedidos', function (RouteCollectorProxy $group) use ($camposPedido) {
-    $group->post('/', 'PedidoController:insertar')->add(function($request, $handler) use ($camposPedido) {
-        return verificarCampos($camposPedido, $request, $handler);
-    });
+$app->group('/pedidos', function (RouteCollectorProxy $group) {
+    $group->post('/', 'PedidoController:insertar');
     $group->get('[/]', 'PedidoController:listar');
     $group->get('/{id}', 'PedidoController:listarUno');
-});
+    $group->put('/{id}', 'PedidoController:modificar');
+    $group->delete('/{id}', 'PedidoController:eliminar');
+})->add(new AutorizacionMiddleware("Mozo"));
 
-$app->group('/empleados', function (RouteCollectorProxy $group) use ($camposEmpleado) {
-    $group->post('/', 'EmpleadoController:insertar')->add(function($request, $handler) use ($camposEmpleado) {
-        return verificarCampos($camposEmpleado, $request, $handler);
-    });
+$app->group('/empleados', function (RouteCollectorProxy $group) {
+    $group->post('/', 'EmpleadoController:insertar');
     $group->get('[/]', 'EmpleadoController:listar');
     $group->get('/{id}', 'EmpleadoController:listarUno');
-});
+    $group->put('/{id}', 'EmpleadoController:modificar');
+    $group->delete('/{id}', 'EmpleadoController:eliminar');
+})->add(new AutorizacionMiddleware("Socio"));
 
-$app->group('/mesas', function (RouteCollectorProxy $group) use ($camposMesa) {
-    $group->post('/', 'MesaController:insertar')->add(function($request, $handler) use ($camposMesa) {
-        return verificarCampos($camposMesa, $request, $handler);
-    });
+$app->group('/mesas', function (RouteCollectorProxy $group) {
+    $group->post('/', 'MesaController:insertar');
     $group->get('[/]', 'MesaController:listar');
     $group->get('/{id}', 'MesaController:listarUno');
+    $group->put('/{id}', 'MesaController:modificar');
+    $group->delete('/{id}', 'MesaController:eliminar');
+    $group->get('/masUsadas/', 'MesaController:mesaMasUsada');
+    $group->post('/{id}', 'MesaController:cerrarMesa');
+})->add(new AutorizacionMiddleware("Socio"));
+
+// $app->group('/encuestas', function (RouteCollectorProxy $group) {
+//     $group->post('/', 'EncuestaController:insertar');
+//     $group->get('[/]', 'EncuestaController:listar');
+//     $group->get('/{id}', 'EncuestaController:listarUno');
+//     $group->delete('/{id}', 'EncuestaController:eliminar');
+// });
+
+
+$app->group('/mozo', function (RouteCollectorProxy $group) {
+    $group->post('/', 'MozoController:abrirMesa');
+    $group->post('/pedido[/]', 'MozoController:crearPedido');
+    $group->post('/pedido/producto/agregar[/]', 'MozoController:insertarProductoAlPedido');
+    $group->post('/pedido/producto/eliminar[/]', 'MozoController:eliminarProductoDelPedido');
+})->add(new AutorizacionMiddleware("Mozo"));
+
+$app->group('/productospedidos', function (RouteCollectorProxy $group) {
+    $group->get('/enproceso[/]', 'EmpleadoController:listarEnProcesoPorTipo');
+    $group->get('[/]', 'EmpleadoController:listarPendientesPorTipo');
+    $group->put('/estadoenproceso[/]', 'EmpleadoController:cambiarEstadoAEnProceso');
 });
 
-
+$app->group('/cliente', function (RouteCollectorProxy $group) {
+    $group->get('/{id}', 'ClienteController:verInfoPedido');
+});
 
 
 
@@ -143,6 +90,8 @@ $app->get('[/]', function (Request $request, Response $response, array $args) {
     echo "<h1>Bienvenido al HOME</h1>";
     return $response;
 });
+
+$app->post('/login[/]', 'LoginControlador:VerificarExistenciaUsuario');
 
 
 $app->run();

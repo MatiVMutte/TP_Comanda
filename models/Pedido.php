@@ -4,19 +4,18 @@
         case Entregado = 'Entregado';
         case EnPreparacion = 'EnPreparacion';
         case Cancelado = 'Cancelado';
+        case Listo = 'Listo';
     }
 
     class Pedido {
         public string $id;
-        public array $idsProductosPedidos = array();
         public int $idMesa;
         public string $nombreCliente;
         public float $totalPrecio;
         public EstadoPedido $estado;
         public $tiempoEstimado;
 
-        public function __construct(int $idMesa, string $nombreCliente, float $totalPrecio, $estado="EnPreparacion", $tiempoEstimado=-1, int $id=-1, array $idsProductosPedidos=array()) {
-            $this->idsProductosPedidos = $idsProductosPedidos;
+        public function __construct(int $idMesa, string $nombreCliente, float $totalPrecio, $estado="EnPreparacion", $tiempoEstimado=0, int $id=-1) {
             $this->idMesa = $idMesa;
             $this->nombreCliente = $nombreCliente;
             $this->totalPrecio = $totalPrecio;
